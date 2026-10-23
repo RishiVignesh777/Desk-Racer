@@ -492,6 +492,7 @@ export function createNpcOpponentSystem({ scene, splineData, startFinishArc }) {
       opp.boostActive = 0.0;
       opp.boostCharge = 0.25;
       opp.isDrifting = false;
+      opp.isBraking = false;
       opp.driftAngle = 0.0;
       opp.isDrafting = false;
       opp.lapCount = 1;
@@ -568,6 +569,8 @@ export function createNpcOpponentSystem({ scene, splineData, startFinishArc }) {
       if (isCountdownLocked) {
         // Idling on the starting grid
         opp.speed = 0.0;
+        opp.isDrifting = false;
+        opp.isBraking = false;
         opp.headingYaw = THREE.MathUtils.lerp(opp.headingYaw, 0.0, 0.2);
         // Subtle engine rumble vibration
         opp.chassis.position.y = Math.sin(performance.now() * 0.05 + opp.s * 10.0) * 0.00015;
@@ -731,6 +734,11 @@ export function createNpcOpponentSystem({ scene, splineData, startFinishArc }) {
       const accel = THREE.MathUtils.clamp(speedErr * 5.2, -1.2, baseAccel * 1.5);
       const slopeFactor = -frame.slope * 0.18;
       opp.speed = Math.max(0.0, opp.speed + (accel + slopeFactor) * clampedDt);
+
+      // Detect braking & cornering drift for skid marks and tire smoke
+      opp.isBraking = accel < -0.22 && opp.speed > 0.042;
+      const cornerSlip = Math.abs(opp.steerSmooth) * (opp.speed / 0.16);
+      opp.isDrifting = (cornerSlip > 0.18 && opp.speed > 0.08) || (Math.abs(frame.curvature) > 0.38 && opp.speed > 0.09);
 
       // Advance arc-length s along track
       const prevS = opp.s;

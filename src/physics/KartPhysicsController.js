@@ -282,6 +282,7 @@ export async function createKartPhysicsController(splineData, manifest, roadGeo)
     topSpeedMultiplier: 1.0,
     steerInput: 0.0,
     isDrifting: false,
+    isBraking: false,
     driftDir: 0, // -1 left, +1 right
     driftAngle: 0.0,
     driftChargeTimer: 0.0,
