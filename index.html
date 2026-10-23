@@ -4,6 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Desk Racer</title>
+    <meta name="description" content="Miniature desk coaster time-trial racing game in Three.js with Ghost Car replay system" />
+    <meta property="og:title" content="Desk Racer" />
+    <meta property="og:description" content="Miniature desk coaster time-trial racing game in Three.js with Ghost Car replay system" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -46,8 +49,28 @@
                 LAP <span id="hud-lap-curr" class="hud-lap-curr">1</span>/3
               </div>
               <div id="hud-lap-timer" class="hud-lap-timer" aria-label="00:00.00"><span class="timer-digit" id="lap-d0">0</span><span class="timer-digit" id="lap-d1">0</span><span class="timer-sep">:</span><span class="timer-digit" id="lap-d2">0</span><span class="timer-digit" id="lap-d3">0</span><span class="timer-sep">.</span><span class="timer-digit" id="lap-d4">0</span><span class="timer-digit" id="lap-d5">0</span></div>
+              <div id="hud-ghost-row" class="hud-ghost-row">
+                <span class="hud-ghost-tag">GHOST</span>
+                <span id="hud-ghost-time" class="hud-ghost-time">--:--.--</span>
+                <span id="hud-ghost-delta" class="hud-ghost-delta hidden">+0.00s</span>
+              </div>
               <div id="hud-lap-split" class="hud-lap-split hidden"></div>
             </div>
+
+            <!-- Top-Right Ghost Car Toggle Button -->
+            <button
+              id="btn-toggle-ghost"
+              class="hud-mute-btn hud-ghost-btn is-active"
+              type="button"
+              aria-label="Toggle Ghost Car (G)"
+              title="Toggle Ghost Car (G)"
+            >
+              <svg class="mute-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 3a6 6 0 0 0-6 6v7.5a1.5 1.5 0 0 0 2.5 1.1l1.5-1.3 2 1.7 2-1.7 2 1.7 1.5 1.3A1.5 1.5 0 0 0 20 16.5V9a6 6 0 0 0-6-6z"></path>
+                <circle cx="9" cy="9" r="1.2" fill="currentColor"></circle>
+                <circle cx="15" cy="9" r="1.2" fill="currentColor"></circle>
+              </svg>
+            </button>
 
             <!-- Top-Right Mute / Unmute Sound Icon Button -->
             <button
@@ -73,6 +96,18 @@
           </div>
         </div>
       </header>
+
+      <!-- Ghost Lap Record Notification Toast -->
+      <div id="hud-ghost-toast" class="hud-ghost-toast hidden" role="status" aria-live="polite">
+        <div class="hud-ghost-toast-inner">
+          <svg class="toast-ghost-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3a6 6 0 0 0-6 6v7.5a1.5 1.5 0 0 0 2.5 1.1l1.5-1.3 2 1.7 2-1.7 2 1.7 1.5 1.3A1.5 1.5 0 0 0 20 16.5V9a6 6 0 0 0-6-6z"></path>
+            <circle cx="9" cy="9" r="1.2" fill="currentColor"></circle>
+            <circle cx="15" cy="9" r="1.2" fill="currentColor"></circle>
+          </svg>
+          <span id="hud-ghost-toast-text">NEW BEST LAP GHOST RECORD!</span>
+        </div>
+      </div>
 
       <!-- Welcome & Controls Dialog (Shown on Launch & When Clicking "Desk Racer") -->
       <div id="welcome-dialog-overlay" class="welcome-dialog-overlay">
@@ -103,6 +138,12 @@
                     <kbd class="welcome-key">S</kbd>
                   </div>
                   <span>BRAKE</span>
+                </div>
+                <div class="control-key-row">
+                  <div class="control-kbd-pair">
+                    <kbd class="welcome-key">G</kbd>
+                  </div>
+                  <span>GHOST REPLAY</span>
                 </div>
               </div>
             </div>
@@ -140,10 +181,15 @@
           <h2 id="hud-finish-title" class="hud-finish-title">FINISH</h2>
           <div id="hud-finish-time" class="hud-finish-time">00:00.00</div>
           <div id="hud-finish-sub" class="hud-finish-sub">BEST LAP 00:00.00</div>
+          <div id="hud-finish-ghost" class="hud-finish-ghost">GHOST RECORD 00:00.00</div>
           <div class="finish-actions-row">
             <button id="btn-finish-race-again" class="welcome-start-btn finish-action-btn" type="button">
               <span class="welcome-start-text">RACE AGAIN</span>
               <kbd class="welcome-enter-kbd">ENTER ↵</kbd>
+            </button>
+            <button id="btn-finish-toggle-ghost" class="welcome-start-btn finish-action-btn finish-ghost-btn" type="button">
+              <span id="finish-ghost-btn-text" class="welcome-start-text">GHOST: ON</span>
+              <kbd class="welcome-enter-kbd">G</kbd>
             </button>
             <button id="btn-finish-autopilot" class="welcome-start-btn finish-action-btn finish-autopilot-btn" type="button">
               <span class="welcome-start-text">AUTO-PILOT</span>

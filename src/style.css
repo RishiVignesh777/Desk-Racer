@@ -341,6 +341,150 @@ body {
   display: none !important;
 }
 
+/* Ghost Telemetry Row under Lap Timer */
+.hud-ghost-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 3px;
+  font-family: 'Orbitron', sans-serif;
+  font-style: italic;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.82);
+  text-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.95),
+    0 3px 8px rgba(0, 0, 0, 0.85);
+  transition: opacity 0.2s ease;
+}
+
+.hud-ghost-row.hidden {
+  display: none !important;
+}
+
+.hud-ghost-tag {
+  font-size: 9.5px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(0, 229, 255, 0.20);
+  border: 1px solid rgba(0, 229, 255, 0.55);
+  color: #00e5ff;
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.6);
+}
+
+.hud-ghost-time {
+  font-variant-numeric: tabular-nums;
+  color: #e2f8ff;
+}
+
+.hud-ghost-delta {
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.65);
+}
+
+.hud-ghost-delta.ahead {
+  color: #2effc6;
+  border: 1px solid rgba(46, 255, 198, 0.45);
+  text-shadow: 0 0 10px rgba(46, 255, 198, 0.7);
+}
+
+.hud-ghost-delta.behind {
+  color: #ff4d64;
+  border: 1px solid rgba(255, 77, 100, 0.45);
+  text-shadow: 0 0 10px rgba(255, 77, 100, 0.7);
+}
+
+.hud-ghost-delta.hidden {
+  display: none !important;
+}
+
+/* Ghost Toggle Button in Top Right */
+.hud-ghost-btn {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.hud-ghost-btn.is-active {
+  color: #00e5ff;
+  border-color: rgba(0, 229, 255, 0.68);
+  box-shadow:
+    0 0 14px rgba(0, 229, 255, 0.42),
+    0 3px 10px rgba(0, 0, 0, 0.88);
+}
+
+.hud-ghost-btn.is-muted {
+  color: rgba(255, 255, 255, 0.35);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: none;
+}
+
+/* Ghost Record Notification Toast */
+.hud-ghost-toast {
+  position: fixed;
+  top: 14%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 55;
+  pointer-events: none;
+  animation: ghostToastPop 0.35s cubic-bezier(0.18, 1, 0.3, 1);
+}
+
+.hud-ghost-toast.hidden {
+  display: none !important;
+}
+
+.hud-ghost-toast-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 22px;
+  transform: skewX(-10deg);
+  background: linear-gradient(95deg, rgba(4, 16, 28, 0.94) 0%, rgba(6, 24, 40, 0.92) 100%);
+  border: 2px solid #00e5ff;
+  border-radius: 8px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.9),
+    0 0 24px rgba(0, 229, 255, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  font-family: 'Orbitron', sans-serif;
+  font-style: italic;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: #ffffff;
+  text-shadow:
+    0 0 14px rgba(0, 229, 255, 0.75),
+    0 2px 4px rgba(0, 0, 0, 0.95);
+}
+
+.hud-ghost-toast-inner * {
+  transform: skewX(10deg);
+}
+
+.toast-ghost-svg {
+  width: 22px;
+  height: 22px;
+  color: #00e5ff;
+  filter: drop-shadow(0 0 8px rgba(0, 229, 255, 0.8));
+}
+
+@keyframes ghostToastPop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -20px) scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
 .hud-f1-countdown {
   position: fixed;
   top: 46%;
@@ -426,6 +570,23 @@ body {
     0 2px 4px rgba(0, 0, 0, 0.96),
     0 4px 12px rgba(0, 0, 0, 0.88);
   margin-top: 6px;
+  margin-bottom: 12px;
+}
+
+.hud-finish-ghost {
+  font-family: 'Orbitron', sans-serif;
+  font-style: italic;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.10em;
+  color: #ffd27d;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  text-shadow:
+    0 0 12px rgba(255, 210, 125, 0.65),
+    0 2px 4px rgba(0, 0, 0, 0.96);
+  margin-top: 0;
   margin-bottom: 24px;
 }
 

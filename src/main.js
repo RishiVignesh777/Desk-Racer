@@ -17,6 +17,7 @@ import { buildGoldenHourAtmosphere } from './scene/GoldenHourAtmosphere.js';
 import { buildRoomEnvironment } from './scene/RoomEnvironmentBuilder.js';
 import { createKartPhysicsController } from './physics/KartPhysicsController.js';
 import { createWebAudioSynth } from './audio/WebAudioSynth.js';
+import { createGhostKartSystem } from './scene/GhostKartSystem.js';
 
 async function initApp() {
   const container = document.getElementById('canvas-container');
@@ -261,6 +262,14 @@ async function initApp() {
   microKart.kartRoot.scale.setScalar(0.38);
   scene.add(microKart.kartRoot);
 
+  const ghostSystem = createGhostKartSystem({ scene, splineData });
+  if (urlParams.get('ghostdemo') === '1' || urlParams.get('ghost') === 'demo') {
+    ghostSystem.seedDemoGhost(splineData.samples);
+  }
+  if (urlParams.get('ghost') === '0' || urlParams.get('ghost') === 'off') {
+    ghostSystem.toggleGhost(false);
+  }
+
   // Dedicated post-Bokeh scene for 3D Drift & Boost Sparks so airborne sparks
   // flying off the edge of the track in front of distant background walls use
   // their OWN 3D view-space depth (mvPosition.z) rather than being blurred by
@@ -278,6 +287,7 @@ async function initApp() {
           ? 0.78
           : 0.58;
     microKart.kartRoot.scale.setScalar(targetScale);
+    ghostSystem.syncKartScale(targetScale);
   }
 
   // ZERO-GEOMETRY-PASS BOKEHPASS RENDER:
@@ -737,6 +747,7 @@ async function initApp() {
     });
     tryLoadGlbAsset('kart_1to87.glb', 'kart', (glbScene) => {
       microKart.attachGlbKart(glbScene);
+      ghostSystem.attachGlbKart(glbScene);
       syncKartScaleForCamera(activeCameraMode);
     });
     tryLoadGlbAsset('room_environment.glb', 'room', (glbScene) => {
@@ -1855,6 +1866,37 @@ async function initApp() {
       radarCtx.drawImage(radarBgCanvas, 0, 0);
     }
 
+    // Ghost Car Marker on Minimap (if ghost replay is active & visible)
+    const ghostPos = ghostSystem ? ghostSystem.getGhostMinimapPosition() : null;
+    if (ghostPos) {
+      const gx = mapMinimapX(ghostPos.x, ghostPos.y, ghostPos.z);
+      const gy = mapMinimapY(ghostPos.x, ghostPos.y, ghostPos.z);
+      radarCtx.save();
+      // Ethereal purple/cyan phantom halo
+      const gHalo = radarCtx.createRadialGradient(gx, gy, 2.0, gx, gy, 22.0);
+      gHalo.addColorStop(0.0, 'rgba(0, 230, 255, 0.70)');
+      gHalo.addColorStop(0.5, 'rgba(130, 80, 255, 0.28)');
+      gHalo.addColorStop(1.0, 'rgba(130, 80, 255, 0.0)');
+      radarCtx.fillStyle = gHalo;
+      radarCtx.beginPath();
+      radarCtx.arc(gx, gy, 22.0, 0, Math.PI * 2);
+      radarCtx.fill();
+
+      // Ghost ring
+      radarCtx.strokeStyle = '#a8f5ff';
+      radarCtx.lineWidth = 2.4;
+      radarCtx.beginPath();
+      radarCtx.arc(gx, gy, 8.5, 0, Math.PI * 2);
+      radarCtx.stroke();
+
+      // Ghost core dot
+      radarCtx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+      radarCtx.beginPath();
+      radarCtx.arc(gx, gy, 3.6, 0, Math.PI * 2);
+      radarCtx.fill();
+      radarCtx.restore();
+    }
+
     const kx = mapMinimapX(st.position.x, st.position.y, st.position.z);
     const ky = mapMinimapY(st.position.x, st.position.y, st.position.z);
 
@@ -1894,6 +1936,15 @@ async function initApp() {
   const elLapCurr = document.getElementById('hud-lap-curr');
   const elLapTimer = document.getElementById('hud-lap-timer');
   const elLapSplit = document.getElementById('hud-lap-split');
+  const elGhostRow = document.getElementById('hud-ghost-row');
+  const elGhostTime = document.getElementById('hud-ghost-time');
+  const elGhostDelta = document.getElementById('hud-ghost-delta');
+  const elGhostToast = document.getElementById('hud-ghost-toast');
+  const elGhostToastText = document.getElementById('hud-ghost-toast-text');
+  const btnToggleGhost = document.getElementById('btn-toggle-ghost');
+  const btnFinishToggleGhost = document.getElementById('btn-finish-toggle-ghost');
+  const elFinishGhostBtnText = document.getElementById('finish-ghost-btn-text');
+  const elFinishGhost = document.getElementById('hud-finish-ghost');
   const lapDigitEls = [
     document.getElementById('lap-d0'),
     document.getElementById('lap-d1'),
@@ -1917,7 +1968,60 @@ async function initApp() {
   }
 
   let lapSplitTimeout = null;
+  let ghostToastTimeout = null;
   let finishOverlayShown = false;
+
+  function showGhostNotification(message) {
+    if (!elGhostToast) return;
+    if (ghostToastTimeout) {
+      clearTimeout(ghostToastTimeout);
+    }
+    if (elGhostToastText) {
+      elGhostToastText.textContent = message;
+    }
+    elGhostToast.classList.remove('hidden');
+    ghostToastTimeout = setTimeout(() => {
+      elGhostToast.classList.add('hidden');
+      ghostToastTimeout = null;
+    }, 3400);
+  }
+
+  function syncGhostButtonUI() {
+    const isGhostOn = ghostSystem.isGhostEnabled();
+    if (btnToggleGhost) {
+      btnToggleGhost.classList.toggle('is-active', isGhostOn);
+      btnToggleGhost.classList.toggle('is-muted', !isGhostOn);
+      btnToggleGhost.setAttribute('aria-pressed', isGhostOn ? 'true' : 'false');
+      btnToggleGhost.title = isGhostOn ? 'Ghost Car: ON (G)' : 'Ghost Car: OFF (G)';
+    }
+    if (elFinishGhostBtnText) {
+      elFinishGhostBtnText.textContent = isGhostOn ? 'GHOST: ON' : 'GHOST: OFF';
+    }
+    if (elGhostRow) {
+      elGhostRow.classList.toggle('hidden', !isGhostOn);
+    }
+  }
+
+  if (btnToggleGhost) {
+    btnToggleGhost.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const on = ghostSystem.toggleGhost();
+      syncGhostButtonUI();
+      showGhostNotification(on ? 'GHOST CAR: ON' : 'GHOST CAR: OFF');
+      btnToggleGhost.blur();
+    });
+  }
+
+  if (btnFinishToggleGhost) {
+    btnFinishToggleGhost.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const on = ghostSystem.toggleGhost();
+      syncGhostButtonUI();
+      btnFinishToggleGhost.blur();
+    });
+  }
+
+  syncGhostButtonUI();
 
   function hideLapSplit() {
     if (lapSplitTimeout) {
@@ -1961,6 +2065,12 @@ async function initApp() {
       const bestVal = bestLap != null ? bestLap : (totalTime || 0) / 3;
       elFinishSub.textContent = `BEST LAP ${formatLapTimerMMSSCC(bestVal)}`;
     }
+    if (elFinishGhost) {
+      const ghostBest = ghostSystem.getBestLapTime();
+      elFinishGhost.textContent = ghostBest
+        ? `GHOST RECORD ${formatLapTimerMMSSCC(ghostBest)}`
+        : `GHOST RECORD SAVED`;
+    }
     if (elFinishOverlay) {
       elFinishOverlay.classList.remove('hidden');
     }
@@ -1978,6 +2088,12 @@ async function initApp() {
   }
 
   physics.onLapComplete((lapTime, bestLap, completedLapNum, totalTime, isFinish) => {
+    // Record into GhostKartSystem and detect if a new best lap was set
+    const ghostRes = ghostSystem.onLapComplete(lapTime, completedLapNum);
+    if (ghostRes && ghostRes.isNewBest) {
+      showGhostNotification(`NEW GHOST RECORD! ${formatLapTimerMMSSCC(ghostRes.newBest)}`);
+    }
+
     if (isFinish) {
       const finalTotal =
         totalTime ?? physics.state.finishTotalTime ?? physics.state.totalRaceTime ?? lapTime;
@@ -2034,6 +2150,7 @@ async function initApp() {
     physics.resetToStart();
     physics.state.countdownLocked = true;
     physics.state.raceClockActive = false;
+    ghostSystem.startLapRecording();
 
     f1CountdownState.active = true;
     f1CountdownState.elapsed = 0.0;
@@ -2087,6 +2204,7 @@ async function initApp() {
       }
       physics.state.countdownLocked = false;
       physics.state.raceClockActive = true; // Lap timer immediately starts ticking!
+      ghostSystem.startLapRecording();
       if (physics.notifyLightsOut) {
         physics.notifyLightsOut();
       }
@@ -2433,6 +2551,10 @@ async function initApp() {
       hideFinishOverlay();
       hideLapSplit();
       cancelF1StartCountdown();
+    } else if (e.code === 'KeyG') {
+      const on = ghostSystem.toggleGhost();
+      syncGhostButtonUI();
+      showGhostNotification(on ? 'GHOST CAR: ON' : 'GHOST CAR: OFF');
     }
   });
 
@@ -2512,6 +2634,25 @@ async function initApp() {
         lastVisorStr = visorStr;
         elVisorInline.textContent = visorStr;
       }
+    }
+
+    // Ghost Telemetry (Best Lap Time & Live Delta)
+    if (ghostSystem && ghostSystem.isGhostEnabled()) {
+      const gInfo = ghostSystem.getDeltaInfo();
+      if (elGhostRow) elGhostRow.classList.remove('hidden');
+      if (elGhostTime) elGhostTime.textContent = gInfo.bestTimeStr;
+      if (elGhostDelta) {
+        if (gInfo.active && gInfo.deltaStr) {
+          elGhostDelta.textContent = gInfo.deltaStr;
+          elGhostDelta.classList.remove('hidden');
+          elGhostDelta.classList.toggle('ahead', gInfo.isAhead);
+          elGhostDelta.classList.toggle('behind', !gInfo.isAhead);
+        } else {
+          elGhostDelta.classList.add('hidden');
+        }
+      }
+    } else if (elGhostRow) {
+      elGhostRow.classList.add('hidden');
     }
 
     drawMinimapRadar(st);
@@ -2703,6 +2844,9 @@ async function initApp() {
     microKart.kartRoot.quaternion.copy(st.quaternion);
     microKart.updateWheels(dt, st.speed, st.steerAngle);
     microKart.updateKartVisuals(dt, st);
+
+    // 2b. Sync Ghost Kart Holographic Replay Transform, Wheels & Shaders
+    ghostSystem.update(dt, st.currentLapTime, st, activeCameraMode);
 
     // 3. Update Warm Night-Time Lamp Key Lighting, Under-Track Orange/Purple/Blue LEDs & #1E6BFF Mic Aura
     atmosphere.updateAtmosphere(elapsedTime, settings, renderer, bloomPass, scene, diorama);
