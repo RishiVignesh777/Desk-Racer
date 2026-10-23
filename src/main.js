@@ -18,6 +18,7 @@ import { buildRoomEnvironment } from './scene/RoomEnvironmentBuilder.js';
 import { createKartPhysicsController } from './physics/KartPhysicsController.js';
 import { createWebAudioSynth } from './audio/WebAudioSynth.js';
 import { createGhostKartSystem } from './scene/GhostKartSystem.js';
+import { createNpcOpponentSystem } from './scene/NpcOpponentSystem.js';
 
 async function initApp() {
   const container = document.getElementById('canvas-container');
@@ -270,6 +271,13 @@ async function initApp() {
     ghostSystem.toggleGhost(false);
   }
 
+  const startFinishArc = splineData.samples[Math.min(646, splineData.samples.length - 1)].arc_length_m;
+  const opponentSystem = createNpcOpponentSystem({
+    scene,
+    splineData,
+    startFinishArc,
+  });
+
   // Dedicated post-Bokeh scene for 3D Drift & Boost Sparks so airborne sparks
   // flying off the edge of the track in front of distant background walls use
   // their OWN 3D view-space depth (mvPosition.z) rather than being blurred by
@@ -288,6 +296,7 @@ async function initApp() {
           : 0.58;
     microKart.kartRoot.scale.setScalar(targetScale);
     ghostSystem.syncKartScale(targetScale);
+    opponentSystem.syncKartScale(targetScale);
   }
 
   // ZERO-GEOMETRY-PASS BOKEHPASS RENDER:
@@ -748,6 +757,7 @@ async function initApp() {
     tryLoadGlbAsset('kart_1to87.glb', 'kart', (glbScene) => {
       microKart.attachGlbKart(glbScene);
       ghostSystem.attachGlbKart(glbScene);
+      opponentSystem.attachGlbKart(glbScene);
       syncKartScaleForCamera(activeCameraMode);
     });
     tryLoadGlbAsset('room_environment.glb', 'room', (glbScene) => {
@@ -851,6 +861,9 @@ async function initApp() {
   const hudMinimapWidget = document.querySelector('.hud-minimap-widget');
   const hudSpeedoGauge = document.querySelector('.hud-speedo-gauge');
   const hudLapWidget = document.getElementById('hud-lap-widget');
+  const hudRacePosRow = document.getElementById('hud-race-pos-row');
+  const hudStandingsTower = document.getElementById('hud-standings-tower');
+  let isStandingsOpen = true;
   const camButtons = document.querySelectorAll('.cam-pill');
   let coursePanElapsed = 0.0;
 
@@ -959,6 +972,14 @@ async function initApp() {
     if (hudMinimapWidget) hudMinimapWidget.classList.toggle('hidden', hideRacingHud);
     if (hudSpeedoGauge) hudSpeedoGauge.classList.toggle('hidden', hideRacingHud);
     if (hudLapWidget) hudLapWidget.classList.toggle('hidden', hideRacingHud);
+    if (hudRacePosRow) hudRacePosRow.classList.toggle('hidden', hideRacingHud);
+    if (hudStandingsTower) {
+      if (hideRacingHud) {
+        hudStandingsTower.classList.add('hidden');
+      } else {
+        hudStandingsTower.classList.toggle('hidden', !isStandingsOpen);
+      }
+    }
 
     if (mode === 4) {
       // Mode 4: Helicopter Cam (Obstacle-Free Keyboard Heli 2 — Kart-Locked Aerial Heli in 100% obstacle-free front-upper airspace)
@@ -1897,6 +1918,44 @@ async function initApp() {
       radarCtx.restore();
     }
 
+    // Render 3 AI Opponent markers on Minimap
+    if (opponentSystem) {
+      const oppMarkers = opponentSystem.getOpponentsMinimapPositions();
+      for (const opp of oppMarkers) {
+        const ox = mapMinimapX(opp.position.x, opp.position.y, opp.position.z);
+        const oy = mapMinimapY(opp.position.x, opp.position.y, opp.position.z);
+        radarCtx.save();
+        const hexStr = '#' + opp.colorHex.toString(16).padStart(6, '0');
+        const oHalo = radarCtx.createRadialGradient(ox, oy, 1.5, ox, oy, 16.0);
+        oHalo.addColorStop(0.0, hexStr + 'bb');
+        oHalo.addColorStop(0.5, hexStr + '44');
+        oHalo.addColorStop(1.0, hexStr + '00');
+        radarCtx.fillStyle = oHalo;
+        radarCtx.beginPath();
+        radarCtx.arc(ox, oy, 16.0, 0, Math.PI * 2);
+        radarCtx.fill();
+
+        // Dark rim for contrast against track
+        radarCtx.fillStyle = 'rgba(0, 10, 20, 0.65)';
+        radarCtx.beginPath();
+        radarCtx.arc(ox, oy, 9.5, 0, Math.PI * 2);
+        radarCtx.fill();
+
+        // Colored body
+        radarCtx.fillStyle = hexStr;
+        radarCtx.beginPath();
+        radarCtx.arc(ox, oy, 7.8, 0, Math.PI * 2);
+        radarCtx.fill();
+
+        // Bright white center core
+        radarCtx.fillStyle = '#ffffff';
+        radarCtx.beginPath();
+        radarCtx.arc(ox, oy, 2.8, 0, Math.PI * 2);
+        radarCtx.fill();
+        radarCtx.restore();
+      }
+    }
+
     const kx = mapMinimapX(st.position.x, st.position.y, st.position.z);
     const ky = mapMinimapY(st.position.x, st.position.y, st.position.z);
 
@@ -1945,6 +2004,31 @@ async function initApp() {
   const btnFinishToggleGhost = document.getElementById('btn-finish-toggle-ghost');
   const elFinishGhostBtnText = document.getElementById('finish-ghost-btn-text');
   const elFinishGhost = document.getElementById('hud-finish-ghost');
+  const elPosNumber = document.getElementById('hud-pos-number');
+  const btnToggleStandings = document.getElementById('btn-toggle-standings');
+  const elStandingsTower = document.getElementById('hud-standings-tower');
+  const elStandingsRows = document.getElementById('hud-standings-rows');
+  const elFinishPosBanner = document.getElementById('hud-finish-position-badge');
+  const elPodiumRows = document.getElementById('hud-podium-rows');
+
+  isStandingsOpen = true;
+  function setStandingsTowerVisible(open) {
+    isStandingsOpen = open !== undefined ? Boolean(open) : !isStandingsOpen;
+    if (elStandingsTower) {
+      elStandingsTower.classList.toggle('hidden', !isStandingsOpen);
+    }
+    if (btnToggleStandings) {
+      btnToggleStandings.classList.toggle('is-active', isStandingsOpen);
+    }
+  }
+
+  if (btnToggleStandings) {
+    btnToggleStandings.addEventListener('click', (e) => {
+      e.stopPropagation();
+      setStandingsTowerVisible();
+      btnToggleStandings.blur();
+    });
+  }
   const lapDigitEls = [
     document.getElementById('lap-d0'),
     document.getElementById('lap-d1'),
@@ -2071,6 +2155,38 @@ async function initApp() {
         ? `GHOST RECORD ${formatLapTimerMMSSCC(ghostBest)}`
         : `GHOST RECORD SAVED`;
     }
+
+    if (opponentSystem) {
+      const lb = opponentSystem.getLeaderboard(physics.state);
+      if (elFinishPosBanner) {
+        const titleStr = lb.playerRank === 1 ? '1ST PLACE — VICTORY!' :
+                         lb.playerRank === 2 ? '2ND PLACE — PODIUM!' :
+                         lb.playerRank === 3 ? '3RD PLACE — PODIUM!' : '4TH PLACE';
+        elFinishPosBanner.textContent = titleStr;
+      }
+
+      if (elPodiumRows) {
+        let rowsHtml = '';
+        for (const r of lb.racers) {
+          const hex = '#' + r.colorHex.toString(16).padStart(6, '0');
+          const isPlayerClass = r.isPlayer ? ' is-player' : '';
+          const posLabel = r.rank === 1 ? '1ST' : r.rank === 2 ? '2ND' : r.rank === 3 ? '3RD' : '4TH';
+          rowsHtml += `
+            <div class="podium-row${isPlayerClass}">
+              <span class="podium-rank-badge podium-rank-${r.rank}">${posLabel}</span>
+              <div class="podium-name-cell">
+                <span class="podium-swatch" style="background:${hex};box-shadow:0 0 6px ${hex};"></span>
+                <span>${r.name}</span>
+              </div>
+              <span>#${r.number}</span>
+              <span class="text-right">${r.timeStr}</span>
+            </div>
+          `;
+        }
+        elPodiumRows.innerHTML = rowsHtml;
+      }
+    }
+
     if (elFinishOverlay) {
       elFinishOverlay.classList.remove('hidden');
     }
@@ -2151,6 +2267,7 @@ async function initApp() {
     physics.state.countdownLocked = true;
     physics.state.raceClockActive = false;
     ghostSystem.startLapRecording();
+    opponentSystem.resetToGrid();
 
     f1CountdownState.active = true;
     f1CountdownState.elapsed = 0.0;
@@ -2546,6 +2663,7 @@ async function initApp() {
       hideFinishOverlay();
       hideLapSplit();
       cancelF1StartCountdown();
+      opponentSystem.resetToGrid();
     } else if (e.code === 'KeyP') {
       hideWelcomeDialog();
       hideFinishOverlay();
@@ -2555,6 +2673,9 @@ async function initApp() {
       const on = ghostSystem.toggleGhost();
       syncGhostButtonUI();
       showGhostNotification(on ? 'GHOST CAR: ON' : 'GHOST CAR: OFF');
+    } else if (e.code === 'Tab') {
+      e.preventDefault();
+      setStandingsTowerVisible();
     }
   });
 
@@ -2563,6 +2684,7 @@ async function initApp() {
   let lastLapCurr = -1;
   let lastLapTimerStr = '';
   let lastVisorStr = '';
+  let lastStandingsHtml = '';
 
   function updateHUD(st) {
     if (activeCameraMode !== 1 && activeCameraMode !== 2) return;
@@ -2653,6 +2775,39 @@ async function initApp() {
       }
     } else if (elGhostRow) {
       elGhostRow.classList.add('hidden');
+    }
+
+    // Live AI Opponents Leaderboard & Position Badge
+    if (opponentSystem) {
+      const lb = opponentSystem.getLeaderboard(st);
+      if (elPosNumber) {
+        const posText = `P${lb.playerRank}`;
+        if (elPosNumber.textContent !== posText) {
+          elPosNumber.textContent = posText;
+          elPosNumber.classList.remove('is-p1', 'is-p2', 'is-p3', 'is-p4');
+          elPosNumber.classList.add(`is-p${lb.playerRank}`);
+        }
+      }
+
+      if (elStandingsRows && isStandingsOpen) {
+        let standingsHtml = '';
+        for (const r of lb.racers) {
+          const hex = '#' + r.colorHex.toString(16).padStart(6, '0');
+          const isPlayerClass = r.isPlayer ? ' is-player' : '';
+          standingsHtml += `
+            <div class="standings-row${isPlayerClass}">
+              <span class="standings-pos">P${r.rank}</span>
+              <span class="standings-swatch" style="background:${hex};box-shadow:0 0 4px ${hex};"></span>
+              <span class="standings-name">${r.name}</span>
+              <span class="standings-gap">${r.gapStr}</span>
+            </div>
+          `;
+        }
+        if (lastStandingsHtml !== standingsHtml) {
+          lastStandingsHtml = standingsHtml;
+          elStandingsRows.innerHTML = standingsHtml;
+        }
+      }
     }
 
     drawMinimapRadar(st);
@@ -2847,6 +3002,11 @@ async function initApp() {
 
     // 2b. Sync Ghost Kart Holographic Replay Transform, Wheels & Shaders
     ghostSystem.update(dt, st.currentLapTime, st, activeCameraMode);
+
+    // 2c. Step 60FPS AI NPC Opponent Racers (Overtaking, Racing Lines, Drafting & Wheel Rotation)
+    if (opponentSystem) {
+      opponentSystem.update(dt, st, f1CountdownState.active, physics.state.raceClockActive);
+    }
 
     // 3. Update Warm Night-Time Lamp Key Lighting, Under-Track Orange/Purple/Blue LEDs & #1E6BFF Mic Aura
     atmosphere.updateAtmosphere(elapsedTime, settings, renderer, bloomPass, scene, diorama);

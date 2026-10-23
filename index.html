@@ -39,6 +39,22 @@
             tabindex="0"
             title="Click to open Controls &amp; Camera Menu"
           >Desk Racer</div>
+
+          <!-- Live Race Position & Mini Leaderboard Tower -->
+          <div id="hud-race-pos-row" class="hud-race-pos-row">
+            <div id="hud-pos-badge" class="hud-pos-badge" title="Live Race Position">
+              <span class="hud-pos-tag">POS</span>
+              <span id="hud-pos-number" class="hud-pos-number">P2</span>
+              <span class="hud-pos-total">/4</span>
+            </div>
+            <button id="btn-toggle-standings" class="hud-standings-toggle is-active" type="button" title="Toggle Race Standings (Tab)">
+              <span>LEADERBOARD</span>
+            </button>
+          </div>
+
+          <div id="hud-standings-tower" class="hud-standings-tower">
+            <div id="hud-standings-rows" class="hud-standings-rows"></div>
+          </div>
         </div>
 
         <div class="hud-settings-anchor">
@@ -112,7 +128,7 @@
       <!-- Welcome & Controls Dialog (Shown on Launch & When Clicking "Desk Racer") -->
       <div id="welcome-dialog-overlay" class="welcome-dialog-overlay">
         <div class="welcome-dialog-card" role="dialog" aria-labelledby="welcome-title">
-          <div class="welcome-eyebrow">DESKTOP CIRCUIT · 3 LAPS</div>
+          <div class="welcome-eyebrow">DESKTOP CIRCUIT · 4 RACERS · 3 LAPS</div>
           <h1 id="welcome-title" class="welcome-title">DESK RACER</h1>
 
           <div class="welcome-controls-grid">
@@ -144,6 +160,12 @@
                     <kbd class="welcome-key">G</kbd>
                   </div>
                   <span>GHOST REPLAY</span>
+                </div>
+                <div class="control-key-row">
+                  <div class="control-kbd-pair">
+                    <kbd class="welcome-key">TAB</kbd>
+                  </div>
+                  <span>LEADERBOARD</span>
                 </div>
               </div>
             </div>
@@ -179,9 +201,22 @@
         <div class="welcome-dialog-card finish-dialog-card">
           <div class="welcome-eyebrow">DESKTOP CIRCUIT · 3 LAPS COMPLETE</div>
           <h2 id="hud-finish-title" class="hud-finish-title">FINISH</h2>
+          <div id="hud-finish-position-badge" class="hud-finish-pos-banner">1ST PLACE</div>
           <div id="hud-finish-time" class="hud-finish-time">00:00.00</div>
           <div id="hud-finish-sub" class="hud-finish-sub">BEST LAP 00:00.00</div>
           <div id="hud-finish-ghost" class="hud-finish-ghost">GHOST RECORD 00:00.00</div>
+
+          <!-- Official 4-Car Race Results Classification Table -->
+          <div id="hud-finish-podium-table" class="hud-finish-podium-table">
+            <div class="podium-header-row">
+              <span>POS</span>
+              <span>RACER</span>
+              <span>CAR</span>
+              <span class="text-right">TIME</span>
+            </div>
+            <div id="hud-podium-rows" class="podium-rows"></div>
+          </div>
+
           <div class="finish-actions-row">
             <button id="btn-finish-race-again" class="welcome-start-btn finish-action-btn" type="button">
               <span class="welcome-start-text">RACE AGAIN</span>

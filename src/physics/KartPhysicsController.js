@@ -1115,6 +1115,7 @@ export async function createKartPhysicsController(splineData, manifest, roadGeo)
     keys,
     stepPhysics,
     sampleTrackAtArcLength,
+    startFinishArc,
     teleportToSector,
     resetToStart,
     setAutopilot,

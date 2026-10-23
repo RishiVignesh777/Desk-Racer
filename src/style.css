@@ -199,6 +199,188 @@ body {
   pointer-events: none !important;
 }
 
+/* Race Position Badge & Standings Tower */
+.hud-race-pos-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: auto;
+  margin-top: -2px;
+}
+
+.hud-pos-badge {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 4px 12px;
+  transform: skewX(-12deg);
+  background: linear-gradient(95deg, rgba(8, 16, 28, 0.92) 0%, rgba(12, 24, 42, 0.88) 100%);
+  border: 1.5px solid rgba(0, 229, 255, 0.65);
+  border-radius: 6px;
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.85),
+    0 0 16px rgba(0, 229, 255, 0.35);
+  font-family: 'Orbitron', sans-serif;
+  font-style: italic;
+  font-weight: 900;
+  cursor: default;
+}
+
+.hud-pos-badge * {
+  transform: skewX(12deg);
+}
+
+.hud-pos-tag {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #00e5ff;
+}
+
+.hud-pos-number {
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: #ffd27d;
+  text-shadow: 0 0 12px rgba(255, 210, 125, 0.7);
+}
+
+.hud-pos-number.is-p1 {
+  color: #ffd27d;
+  text-shadow: 0 0 14px rgba(255, 210, 125, 0.9);
+}
+
+.hud-pos-number.is-p2 {
+  color: #e2e8f0;
+  text-shadow: 0 0 12px rgba(226, 232, 240, 0.8);
+}
+
+.hud-pos-number.is-p3 {
+  color: #ff9e54;
+  text-shadow: 0 0 12px rgba(255, 158, 84, 0.8);
+}
+
+.hud-pos-number.is-p4 {
+  color: #94a3b8;
+  text-shadow: 0 0 8px rgba(148, 163, 184, 0.6);
+}
+
+.hud-pos-total {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.hud-standings-toggle {
+  cursor: pointer;
+  padding: 4px 10px;
+  transform: skewX(-12deg);
+  background: rgba(8, 14, 24, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 5px;
+  font-family: 'Orbitron', sans-serif;
+  font-style: italic;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.78);
+  transition: all 0.14s ease;
+}
+
+.hud-standings-toggle span {
+  display: inline-block;
+  transform: skewX(12deg);
+}
+
+.hud-standings-toggle:hover,
+.hud-standings-toggle.is-active {
+  border-color: #00e5ff;
+  color: #00e5ff;
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.4);
+}
+
+.hud-standings-tower {
+  pointer-events: auto;
+  width: 220px;
+  background: linear-gradient(160deg, rgba(8, 14, 26, 0.88) 0%, rgba(4, 8, 16, 0.94) 100%);
+  border: 1.5px solid rgba(0, 229, 255, 0.35);
+  border-radius: 8px;
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.85),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  overflow: hidden;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.hud-standings-tower.hidden {
+  display: none !important;
+}
+
+.hud-standings-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.standings-row {
+  display: grid;
+  grid-template-columns: 24px 8px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  font-family: 'Orbitron', sans-serif;
+  font-style: italic;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.85);
+  transition: background 0.12s ease;
+}
+
+.standings-row:last-child {
+  border-bottom: none;
+}
+
+.standings-row.is-player {
+  background: linear-gradient(90deg, rgba(0, 229, 255, 0.22) 0%, rgba(0, 229, 255, 0.06) 100%);
+  color: #ffffff;
+}
+
+.standings-pos-chip {
+  font-size: 10px;
+  font-weight: 900;
+  color: #94a3b8;
+}
+
+.standings-row.is-p1 .standings-pos-chip {
+  color: #ffd27d;
+}
+
+.standings-swatch {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 6px currentColor;
+}
+
+.standings-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.standings-gap {
+  font-variant-numeric: tabular-nums;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.standings-row.is-p1 .standings-gap {
+  color: #ffd27d;
+}
+
 /* 2. Top-Right: Lap Counter/Timer + Sound Mute Toggle Button */
 .hud-settings-anchor {
   position: relative;
@@ -587,7 +769,89 @@ body {
     0 0 12px rgba(255, 210, 125, 0.65),
     0 2px 4px rgba(0, 0, 0, 0.96);
   margin-top: 0;
-  margin-bottom: 24px;
+  margin-bottom: 14px;
+}
+
+.hud-finish-pos-banner {
+  font-family: 'Orbitron', sans-serif;
+  font-style: italic;
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: #ffd27d;
+  text-shadow:
+    0 0 20px rgba(255, 210, 125, 0.8),
+    0 2px 6px rgba(0, 0, 0, 0.95);
+  margin-top: 2px;
+  margin-bottom: 6px;
+}
+
+.hud-finish-podium-table {
+  margin: 14px auto 22px;
+  width: 100%;
+  max-width: 440px;
+  background: rgba(6, 10, 20, 0.85);
+  border: 1px solid rgba(0, 229, 255, 0.35);
+  border-radius: 8px;
+  overflow: hidden;
+  font-family: 'Orbitron', sans-serif;
+  font-style: italic;
+  font-size: 11px;
+  text-align: left;
+}
+
+.podium-header-row {
+  display: grid;
+  grid-template-columns: 44px 1fr 60px 75px;
+  padding: 6px 10px;
+  background: rgba(0, 229, 255, 0.16);
+  border-bottom: 1px solid rgba(0, 229, 255, 0.28);
+  font-size: 9.5px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: #00e5ff;
+}
+
+.podium-row {
+  display: grid;
+  grid-template-columns: 44px 1fr 60px 75px;
+  padding: 7px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-weight: 800;
+  align-items: center;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.podium-row:last-child {
+  border-bottom: none;
+}
+
+.podium-row.is-player {
+  background: linear-gradient(90deg, rgba(0, 229, 255, 0.22) 0%, rgba(0, 229, 255, 0.04) 100%);
+  color: #ffffff;
+}
+
+.podium-rank-badge {
+  font-weight: 900;
+  font-size: 10.5px;
+}
+
+.podium-rank-1 { color: #ffd27d; }
+.podium-rank-2 { color: #e2e8f0; }
+.podium-rank-3 { color: #ff9e54; }
+.podium-rank-4 { color: #94a3b8; }
+
+.podium-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.podium-swatch {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
 }
 
 .finish-actions-row {
